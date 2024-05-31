@@ -1,49 +1,129 @@
-particlesJS("particles-js", {"particles":{"number":{"value":558,"density":{"enable":true,"value_area":800}},"color":{"value":"#ffffff"},"shape":{"type":"circle","stroke":{"width":0,"color":"#000000"},"polygon":{"nb_sides":5},"image":{"src":"img/github.svg","width":100,"height":100}},"opacity":{"value":0.9700642968236413,"random":false,"anim":{"enable":false,"speed":1,"opacity_min":0.1,"sync":false}},"size":{"value":3,"random":true,"anim":{"enable":false,"speed":40,"size_min":0.1,"sync":false}},"line_linked":{"enable":false,"distance":150,"color":"#ffffff","opacity":0.4,"width":1},"move":{"enable":true,"speed":2,"direction":"bottom","random":true,"straight":true,"out_mode":"out","bounce":false,"attract":{"enable":false,"rotateX":600,"rotateY":1200}}},"interactivity":{"detect_on":"canvas","events":{"onhover":{"enable":true,"mode":"grab"},"onclick":{"enable":false,"mode":"push"},"resize":true},"modes":{"grab":{"distance":292.33117874427535,"line_linked":{"opacity":0.2714664122011815}},"bubble":{"distance":400,"size":40,"duration":2,"opacity":8,"speed":3},"repulse":{"distance":200,"duration":0.4},"push":{"particles_nb":4},"remove":{"particles_nb":2}}},"retina_detect":true});var count_particles, stats, update; stats = new Stats; stats.setMode(0); stats.domElement.style.position = 'absolute'; stats.domElement.style.left = '0px'; stats.domElement.style.top = '0px'; document.body.appendChild(stats.domElement); count_particles = document.querySelector('.js-count-particles'); update = function() { stats.begin(); stats.end(); if (window.pJSDom[0].pJS.particles && window.pJSDom[0].pJS.particles.array) { count_particles.innerText = window.pJSDom[0].pJS.particles.array.length; } requestAnimationFrame(update); }; requestAnimationFrame(update);;
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/uv.sw-handler.js', { scope: __uv$config.prefix })
-}
+window.bare = new Ultraviolet.BareClient(new URL(__uv$config.bare, window.location));
 
 function fullscreen() {
-  var elem = document.getElementById('ifr')
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) { /* Safari */
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) { /* IE11 */
-    elem.msRequestFullscreen();
-  }
+	var elem = document.getElementById("ifr")
+	if (elem.requestFullscreen) {
+		elem.requestFullscreen();
+	} else if (elem.webkitRequestFullscreen) { /* Safari */
+		elem.webkitRequestFullscreen();
+	} else if (elem.msRequestFullscreen) { /* IE11 */
+		elem.msRequestFullscreen();
+	}
 }
-function changeFavicon(f) {
-  var link = document.querySelector("link[rel~='icon']");
-  if (!link) {
-    link = document.createElement('link');
-    link.rel = 'icon';
-    document.head.appendChild(link);
-  }
-  link.href = f;
+
+
+async function registerSW() {
+	await navigator.serviceWorker.register("/dynamic.sw-handler.js", {
+		scope: "/shuttle-dn",
+	});
+	const workerURL = "/uv.sw-handler.js";
+	const worker = await navigator.serviceWorker.getRegistration(workerURL, {
+		scope: "/shuttle-uv",
+	});
+	if (worker) return worker;
+	return navigator.serviceWorker.register(workerURL, { scope: __uv$config.prefix });
 }
-window.onload = () => {
-  if(localStorage.getItem('title')) {
-    document.title = localStorage.getItem('title')
-  }
-  if(localStorage.getItem('favicon')) {
-    changeFavicon(localStorage.getItem('favicon'))
-  }
+
+function setFavicon(f) {
+	var link = document.querySelector("link[rel~='icon']");
+	if (!link) {
+		link = document.createElement("link");
+		link.rel = "icon";
+		document.head.appendChild(link);
+	}
+	link.href = f;
 }
-/*document.addEventListener("visibilitychange", () => {
-  var l = localStorage.getItem('autoCloak')
-  if(!l) return;
-  if (document.visibilityState === 'hidden') {
-    switch (l) {
-      case 'low':
-        changeFavicon('https://google.com/favicon.ico')
-        document.title = 'Google'
-      case 'high':
-        document.location.href = 'https://google.com'
-    }
-  } else if (document.visibilityState === 'visible') {
-    changeFavicon(localStorage.getItem('favicon'))
-    document.title = localStorage.getItem('title')
-  } else{ console.log('Visibility Change: ' + document.visibilityState) }
-});*/
+
+function encodeUVUrlWithPath(url = "") {
+	return __uv$config.prefix + __uv$config.encodeUrl(url);
+}
+
+function abc() {
+	let inFrame;
+
+	try {
+		inFrame = window !== top;
+	} catch (e) {
+		inFrame = true;
+	}
+
+	if (inFrame) return;
+	const popup = window.open();
+	if (!popup || popup.closed) {
+		alert("Auto tab mask failed to open a new tab, allow popups and reload");
+		return;
+	}
+
+	popup.document.body.innerHTML = `<title>${localStorage.getItem("shuttle||name") || "Sign in to your account"}</title>
+<link rel="icon" href="${localStorage.getItem("shuttle||icon") || "https://www.microsoft.com/favicon.ico"}">
+<iframe style="height:100%; width: 100%; border: none; position: fixed; top: 0; right: 0; left: 0; bottom: 0; border: none" sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-top-navigation allow-top-navigation-by-user-activation" src="${window.location.href}"></iframe>`;
+
+	window.location.replace("https://www.google.com/");
+}
+
+registerSW();
+
+window.addEventListener("load", () => {
+	if (localStorage.getItem("shuttle||title")) document.title = localStorage.getItem("shuttle||title");
+	if (localStorage.getItem("shuttle||favicon")) setFavicon(localStorage.getItem("shuttle||favicon"));
+
+	const savedTheme = localStorage.getItem("shuttle||themehex");
+	if (savedTheme) {
+		document.body.style.backgroundColor = savedTheme;
+	}
+	if (localStorage.getItem("shuttle||fortniteMode") === "activated") {
+		document.body.style.backgroundImage = "url(\"https://i.ytimg.com/vi/6evDWowLMbE/maxresdefault.jpg\")";
+	}
+});
+
+const checkbox = document.getElementById("checkbox");
+const darkMode = localStorage.getItem("shuttle||darkMode");
+
+function setLightMode(enable = true) {
+	enable ? document.body.classList.add("dark") : document.body.classList.remove("dark");
+	checkbox.checked = enable;
+}
+
+function toggleDarkMode() {
+	if (document.body.classList.contains("dark")) {
+		setLightMode(false);
+		localStorage.setItem("shuttle||darkMode", "false");
+	} else {
+		setLightMode(true);
+		localStorage.setItem("shuttle||darkMode", "true");
+	}
+}
+
+checkbox.addEventListener("change", toggleDarkMode);
+
+setLightMode(darkMode == "true");
+
+/**
+ * Why is this a thing
+ * @useless true
+ */
+function mostUselessFunction() {
+	var currentTime = new Date();
+
+	var year = currentTime.getFullYear();
+	var month = currentTime.getMonth() + 1; // Months are zero-based
+	var day = currentTime.getDate();
+
+	var hours = currentTime.getHours();
+	var minutes = currentTime.getMinutes();
+	var seconds = currentTime.getSeconds();
+
+	var ampm = hours >= 12 ? "PM" : "AM";
+
+	hours = (hours % 12) || 12;
+
+	month = (month < 10 ? "0" : "") + month;
+	day = (day < 10 ? "0" : "") + day;
+	hours = (hours < 10 ? "0" : "") + hours;
+	minutes = (minutes < 10 ? "0" : "") + minutes;
+	seconds = (seconds < 10 ? "0" : "") + seconds;
+
+	document.getElementById("time").innerHTML = year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds + " " + ampm;
+}
+
+setInterval(mostUselessFunction, 1000);
